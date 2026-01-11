@@ -1,14 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react'
+import SignalingClient from '../services/signalingClient'
 
-export default function LiveBroadcaster({ onStreamReady }) {
+export default function LiveBroadcaster({ streamId, broadcasterId, onStreamReady }) {
   const videoRef = useRef(null)
   const [error, setError] = useState(null)
   const [isStreaming, setIsStreaming] = useState(false)
   const peerConnectionRef = useRef(null)
+  const signalingRef = useRef(null)
+  const iceCandidateQueueRef = useRef([])
 
   useEffect(() => {
     const startBroadcast = async () => {
       try {
+        // Initialize signaling client
+        const signalingUrl = import.meta.env.VITE_SIGNALING_SERVER_URL || 'http://localhost:8787'
+        const signaling = new SignalingClient(signalingUrl)
+        signalingRef.current = signaling
+
+        // Create room for this stream
+        await signaling.createRoom(broadcasterId, streamId)
+        console.log('Room created:', signaling.roomId)
+
         // Get user's camera
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -38,18 +50,29 @@ export default function LiveBroadcaster({ onStreamReady }) {
         })
 
         // Handle ICE candidates
-        peerConnection.onicecandidate = (event) => {
+        peerConnection.onicecandidate = async (event) => {
           if (event.candidate) {
-            // Send ICE candidate to viewers via Firebase
-            console.log('ICE Candidate:', event.candidate)
+            try {
+              await signaling.addICECandidate(broadcasterId, event.candidate)
+              console.log('ICE Candidate sent:', event.candidate)
+            } catch (err) {
+              console.error('Failed to send ICE candidate:', err)
+            }
           }
         }
+
+        // Create and send SDP offer
+        const offer = await peerConnection.createOffer()
+        await peerConnection.setLocalDescription(offer)
+        await signaling.storeBroadcasterSDP(broadcasterId, peerConnection.localDescription)
+        console.log('SDP offer sent to signaling server')
 
         setIsStreaming(true)
         onStreamReady?.()
 
       } catch (err) {
         setError(err.message)
+        console.error('Broadcast error:', err)
       }
     }
 
@@ -63,7 +86,7 @@ export default function LiveBroadcaster({ onStreamReady }) {
         peerConnectionRef.current.close()
       }
     }
-  }, [onStreamReady])
+  }, [streamId, broadcasterId, onStreamReady])
 
   const stopBroadcast = () => {
     if (videoRef.current?.srcObject) {

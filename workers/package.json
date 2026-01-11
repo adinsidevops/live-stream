@@ -1,0 +1,20 @@
+{
+  "name": "bigo-live-signaling",
+  "version": "1.0.0",
+  "description": "Cloudflare Workers signaling server for WebRTC streaming",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "format": "prettier --write 'src/**/*.js'",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "wrangler": "^3.50.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.1.0",
+    "eslint": "^8.55.0"
+  }
+}

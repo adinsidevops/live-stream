@@ -31,6 +31,12 @@ A modern live streaming web application built with React, Firebase, and WebRTC. 
   - **Cloud Functions** - Serverless backend logic
   - **Hosting** - Deploy web app
 
+- **Cloudflare Workers** - WebRTC Signaling Server
+  - **Durable Objects** - Room state management
+  - **SDP Offer/Answer Exchange** - WebRTC negotiation
+  - **ICE Candidate Relay** - NAT traversal support
+  - **Global Edge Network** - Low-latency signaling
+
 ## Getting Started
 
 ### Prerequisites
@@ -81,14 +87,31 @@ VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 VITE_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+VITE_SIGNALING_SERVER_URL=http://localhost:8787
 ```
 
-6. **Start development server**
+6. **Deploy Cloudflare Workers signaling server**
+
+Follow the [Cloudflare Workers Setup Guide](./CLOUDFLARE_SETUP.md) for detailed instructions on:
+- Installing Wrangler CLI
+- Setting up Durable Objects
+- Local development with `wrangler dev`
+- Deploying to production
+
+7. **Start development server**
 ```bash
 npm run dev
 ```
 
 The app will open at `http://localhost:3000`
+
+In another terminal, start the Cloudflare Workers signaling server:
+```bash
+cd workers
+wrangler dev
+```
+
+The signaling server will run at `http://localhost:8787`
 
 ## Project Structure
 
